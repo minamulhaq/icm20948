@@ -16,33 +16,62 @@ HAL_StatusTypeDef ret;
 char debugBuf[50];
 
 void uartFlush(void) {
-	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf),HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf),
+	HAL_MAX_DELAY);
 }
 
 ICM20948::ICM20948(uint8_t address) :
-		_i2cAddress(address << 1), _currentBank(BANK0) {
+		_i2cAddress(address << 1), _i2cAddressDebug(address), _currentBank(
+				BANK0) {
 
-	uint8_t id = whoAmI();
-	if (id == WHOAMI){
-		sprintf(debugBuf, "Imu 0x%x\tid:%x\tconnected\r\n", _i2cAddress>>1 &0xFF, id & 0xFF);
-	}else {
-		sprintf(debugBuf, "Imu 0x%x is not connected\r\n", _i2cAddress>>1 &0xFF);
-	}
-	uartFlush();
+	whoAmI();
+	reset();
+
 }
 
 uint8_t ICM20948::whoAmI(void) {
 	switchUserBank(BANK0);
-	return I2C_ReadByte(REGISTER_WHO_AM_I);
+
+	uint8_t id = I2C_ReadByte(REGISTER_WHO_AM_I);
+	if (id == WHOAMI) {
+		sprintf(debugBuf, "Imu 0x%x\tid:%x\tconnected\r\n",
+				_i2cAddress >> 1 & 0xFF, id & 0xFF);
+	} else {
+		sprintf(debugBuf, "Imu 0x%x is not connected\r\n",
+				_i2cAddress >> 1 & 0xFF);
+	}
+	uartFlush();
+
+	return id;
 }
 
 void ICM20948::switchUserBank(const USERBANK &newBank) {
 	if (_currentBank != newBank) {
 		_currentBank = newBank;
-		I2C_writeTwoBytes(REGISTER_BANK_SEL, _currentBank<< 4);
+		I2C_writeTwoBytes(REGISTER_BANK_SEL, _currentBank << 4);
 
 	}
 }
+
+/**
+ * Resets the internal registers of IMU
+ * Register PWR_MGMT_1 - Address 0x06 - Bank 0
+ * Reset Value: 0x41
+ */
+
+void ICM20948::reset(void) {
+	switchUserBank(BANK0);
+	I2C_writeTwoBytes(REGISTER_PWR_MGMT_1, BIT_RESET);
+	HAL_Delay(20);
+	if (I2C_ReadByte(REGISTER_PWR_MGMT_1) == 0x41) {
+		sprintf(debugBuf, "IMU 0x%x reset successful\r\n", _i2cAddressDebug);
+	} else {
+		sprintf(debugBuf, "IMU 0x%x reset unsuccessful\r\n", _i2cAddressDebug);
+	}
+	uartFlush();
+
+}
+
 void ICM20948::I2C_writeByte(const uint8_t &regAddress) {
 	uint8_t buf = regAddress;
 	ret = HAL_I2C_Master_Transmit(&hi2c1, _i2cAddress, &buf, sizeof(buf),
@@ -59,7 +88,7 @@ uint8_t ICM20948::I2C_ReadByte(const uint8_t &regAddress) {
 	I2C_writeByte(regAddress);
 
 	ret = HAL_I2C_Master_Receive(&hi2c1, _i2cAddress, &retVal, 0x01,
-			HAL_MAX_DELAY);
+	HAL_MAX_DELAY);
 	if (ret != HAL_OK) {
 		sprintf(debugBuf, "Error ICM20948::I2C_ReadByte - while writing\r\n");
 		uartFlush();

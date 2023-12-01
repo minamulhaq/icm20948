@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "ICM20948.h"
+#include <stm32l476xx.h>
 
 
 extern I2C_HandleTypeDef hi2c1;
@@ -27,6 +28,7 @@ void flushUart(void) {
 
 void mainCpp(void) {
 
+	HAL_Delay(300);
 	ICM20948 imu1 (0x68);
 	ICM20948 imu2 (0x69);
 

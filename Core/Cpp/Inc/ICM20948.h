@@ -19,11 +19,13 @@ private:
 
 	// fields
 	uint8_t _i2cAddress;
+	uint8_t _i2cAddressDebug;
 	USERBANK _currentBank;
 
 
 	// Methods
 	void switchUserBank (const USERBANK& newBank);
+	void reset(void);
 
 
 	void I2C_writeByte(const uint8_t& regAddress);
