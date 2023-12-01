@@ -14,6 +14,7 @@
 class ICM20948 {
 public:
 	ICM20948(uint8_t address);
+	HAL_StatusTypeDef isDeviceConnected(void);
 	uint8_t whoAmI(void);
 private:
 

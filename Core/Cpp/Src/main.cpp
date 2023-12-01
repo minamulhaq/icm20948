@@ -15,36 +15,30 @@
 
 extern I2C_HandleTypeDef hi2c1;
 extern UART_HandleTypeDef huart2;
-char buf[50] = { 0 };
+
+
+ char debugBuf[50];
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void flushUart(void) {
-	HAL_UART_Transmit(&huart2, (uint8_t*) buf, sizeof(buf), HAL_MAX_DELAY);
-	std::fill(std::begin(buf), std::end(buf), 0);
+
+
+void clearBuffer(void){
+	std::fill(std::begin(debugBuf), std::end(debugBuf), 0);
+}
+void uartFlush(void) {
+	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf), HAL_MAX_DELAY);
+	clearBuffer();
 }
 
 void mainCpp(void) {
-
-	HAL_Delay(300);
+	clearBuffer();
+	sprintf(debugBuf, "\r\n\n\n___ BEGIN ___\r\n");
+	uartFlush();
 	ICM20948 imu1 (0x68);
 	ICM20948 imu2 (0x69);
-
-//	std::fill(std::begin(buf), std::end(buf), 0);
-//	sprintf(buf, "mainCPP\r\n");
-//	flushUart();
-//
-//	HAL_StatusTypeDef ret;
-//	ret = HAL_I2C_IsDeviceReady(&hi2c1, 0x68 << 1, 2, 2);
-//	if (ret == HAL_OK) {
-//		sprintf(buf, "HAL_OK\r\n");
-//	}
-//	else {
-//		sprintf(buf, "HAL_OK\r\n");
-//	}
-//	flushUart();
 
 	while (1) {
 

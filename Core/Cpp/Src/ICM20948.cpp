@@ -13,20 +13,41 @@ extern I2C_HandleTypeDef hi2c1;
 extern UART_HandleTypeDef huart2;
 
 HAL_StatusTypeDef ret;
-char debugBuf[50];
+extern char debugBuf[50];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+  extern void clearBuffer(void);
+#ifdef __cplusplus
+}
+#endif
 
 void uartFlush(void) {
-	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf),
-	HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf), HAL_MAX_DELAY);
+	clearBuffer();
 }
 
 ICM20948::ICM20948(uint8_t address) :
 		_i2cAddress(address << 1), _i2cAddressDebug(address), _currentBank(
 				BANK0) {
 
-	whoAmI();
-	reset();
+	clearBuffer();
+	if (isDeviceConnected() == HAL_OK) {
+		sprintf(debugBuf, "I2C Device 0x%x detected\r\n", _i2cAddressDebug);
+		uartFlush();
+		HAL_Delay(300);
+		whoAmI();
+		reset();
+	} else {
+		sprintf(debugBuf, "I2C Device 0x%x is not detected\r\n", _i2cAddressDebug);
+		uartFlush();
+	}
 
+
+}
+HAL_StatusTypeDef ICM20948::isDeviceConnected() {
+	return HAL_I2C_IsDeviceReady(&hi2c1, _i2cAddress, 2, 5);
 }
 
 uint8_t ICM20948::whoAmI(void) {
