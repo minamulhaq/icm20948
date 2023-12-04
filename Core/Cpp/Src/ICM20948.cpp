@@ -18,13 +18,14 @@ extern char debugBuf[50];
 #ifdef __cplusplus
 extern "C" {
 #endif
-  extern void clearBuffer(void);
+extern void clearBuffer(void);
 #ifdef __cplusplus
 }
 #endif
 
 void uartFlush(void) {
-	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf),
+			HAL_MAX_DELAY);
 	clearBuffer();
 }
 
@@ -32,18 +33,20 @@ ICM20948::ICM20948(uint8_t address) :
 		_i2cAddress(address << 1), _i2cAddressDebug(address), _currentBank(
 				BANK0) {
 
+	setAccelConfig(_accel_config);
+	switchUserBank(BANK0);
 	clearBuffer();
 	if (isDeviceConnected() == HAL_OK) {
 		sprintf(debugBuf, "I2C Device 0x%x detected\r\n", _i2cAddressDebug);
 		uartFlush();
-		HAL_Delay(300);
 		whoAmI();
 		reset();
+
 	} else {
-		sprintf(debugBuf, "I2C Device 0x%x is not detected\r\n", _i2cAddressDebug);
+		sprintf(debugBuf, "I2C Device 0x%x is not detected\r\n",
+				_i2cAddressDebug);
 		uartFlush();
 	}
-
 
 }
 HAL_StatusTypeDef ICM20948::isDeviceConnected() {
@@ -64,6 +67,28 @@ uint8_t ICM20948::whoAmI(void) {
 	uartFlush();
 
 	return id;
+}
+
+/**
+ * Configure Accelerometer cofniguration
+ * @param	ACCEL_CONFIG - struct to register ACEL_CONFIG
+ * 			Register Address - 0x14 - Bank 2
+ * 			Reset Value = 0x01
+ * return	value of register == config
+ */
+bool ICM20948::setAccelConfig(const ACCEL_CONFIG &config) {
+	_accel_config = config;
+	switchUserBank(BANK2);
+	I2C_writeTwoBytes(REGISTER_BANK_SEL, _accel_config.getConfiguration());
+	HAL_Delay(100);
+	bool status = I2C_ReadByte(REGISTER_BANK_SEL) == _accel_config.getConfiguration();
+	if (status) {
+		sprintf(debugBuf, "Imu 0x%x Accel_config successful\r\n",_i2cAddress >> 1 & 0xFF);
+	} else {
+		sprintf(debugBuf, "Imu 0x%x Accel_config fail\r\n",_i2cAddress >> 1 & 0xFF);
+	}
+	uartFlush();
+	return status;
 }
 
 void ICM20948::switchUserBank(const USERBANK &newBank) {

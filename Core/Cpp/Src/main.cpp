@@ -40,6 +40,21 @@ void mainCpp(void) {
 	ICM20948 imu1 (0x68);
 	ICM20948 imu2 (0x69);
 
+
+	ACCEL_CONFIG config1 = {
+			.accel_dlpfcfg = DLPF_4,
+			.accel_fs_sel = ACCEL_FS_RANGE_4G,
+			.accel_fchoice = ENABLE
+	};
+
+	ACCEL_CONFIG config2 = {
+			.accel_dlpfcfg = DLPF_4,
+			.accel_fs_sel = ACCEL_FS_RANGE_4G,
+			.accel_fchoice = ENABLE
+	};
+
+	imu1.setAccelConfig(config1);
+	imu2.setAccelConfig(config2);
 	while (1) {
 
 	}

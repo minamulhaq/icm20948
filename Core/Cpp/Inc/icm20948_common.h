@@ -18,24 +18,26 @@ typedef enum {
 } USERBANK;
 
 
+/*
 typedef enum FCHOICE {
   BYPASS_DLPF = 0,
   ENALBE_DLPF
 } FCHOICE;
+*/
 
 
 
-typedef enum ICM20948_DLPF {
-  ICM20948_DLPF_0,
-  ICM20948_DLPF_1,
-  ICM20948_DLPF_2,
-  ICM20948_DLPF_3,
-  ICM20948_DLPF_4,
-  ICM20948_DLPF_5,
-  ICM20948_DLPF_6,
-  ICM20948_DLPF_7,
-  ICM20948_DLPF_OFF
-} ICM20948_DLPF;
+typedef enum {
+  DLPF_0,
+  DLPF_1,
+  DLPF_2,
+  DLPF_3,
+  DLPF_4,
+  DLPF_5,
+  DLPF_6,
+  DLPF_7,
+  DLPF_OFF
+} DLPF;
 
 typedef enum GYRO_FS_RANGE {
   GYRO_FS_RANGE_250,
@@ -72,10 +74,10 @@ typedef enum ACCEL_AVG {
   ACCEL_AVERAGE_32
 } ACCEL_AVG;
 
-typedef struct ACCEL_CONFIG {
-  ICM20948_DLPF accel_dlpfcfg = ICM20948_DLPF_0;
+typedef struct {
+  DLPF accel_dlpfcfg = DLPF_0;
   ACCEL_FS_SEL accel_fs_sel = ACCEL_FS_RANGE_2G;
-  FCHOICE accel_fchoice = ENALBE_DLPF;
+  FunctionalState accel_fchoice = ENABLE;
 public:
   uint8_t getConfiguration(void) {
     return ((accel_dlpfcfg << 3) | (accel_fs_sel << 1) | accel_fchoice);
@@ -99,9 +101,9 @@ public:
 
 
 typedef struct GYRO_CONFIG_1 {
-  ICM20948_DLPF gyro_dlpfcfg = ICM20948_DLPF_0;
+  DLPF gyro_dlpfcfg = DLPF_0;
   GYRO_FS_RANGE gyro_fs_sel = GYRO_FS_RANGE_250;
-  FCHOICE gyro_fchoice = ENALBE_DLPF;
+  FunctionalState gyro_fchoice = ENABLE;
 
 public:
   uint8_t getConfiguration(void) {

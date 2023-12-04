@@ -16,6 +16,8 @@ public:
 	ICM20948(uint8_t address);
 	HAL_StatusTypeDef isDeviceConnected(void);
 	uint8_t whoAmI(void);
+	void reset(void);
+	bool setAccelConfig(const ACCEL_CONFIG& config);
 private:
 
 	// fields
@@ -23,10 +25,11 @@ private:
 	uint8_t _i2cAddressDebug;
 	USERBANK _currentBank;
 
+	ACCEL_CONFIG _accel_config;
+
 
 	// Methods
 	void switchUserBank (const USERBANK& newBank);
-	void reset(void);
 
 
 	void I2C_writeByte(const uint8_t& regAddress);
