@@ -10,6 +10,8 @@
 
 #define WHOAMI 0xEA
 
+#define ACCEL_GYRO_RAW_BYTES_COUNT 0x06
+
 typedef enum {
 	BANK0,
 	BANK1,
@@ -17,6 +19,12 @@ typedef enum {
 	BANK3,
 } USERBANK;
 
+
+typedef enum {
+	INTERNAL_20_MHZ,
+	AUTO_CLK_SELECT,
+	TIMING_GENERATOR_IN_RESET
+} CLKSEL;
 
 /*
 typedef enum FCHOICE {
@@ -100,7 +108,7 @@ public:
 } ACCEL_CONFIG;
 
 
-typedef struct GYRO_CONFIG_1 {
+typedef struct {
   DLPF gyro_dlpfcfg = DLPF_0;
   GYRO_FS_RANGE gyro_fs_sel = GYRO_FS_RANGE_250;
   FunctionalState gyro_fchoice = ENABLE;

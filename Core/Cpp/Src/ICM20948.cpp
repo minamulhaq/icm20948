@@ -25,7 +25,7 @@ extern void clearBuffer(void);
 
 void uartFlush(void) {
 	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf),
-			HAL_MAX_DELAY);
+	HAL_MAX_DELAY);
 	clearBuffer();
 }
 
@@ -33,15 +33,16 @@ ICM20948::ICM20948(uint8_t address) :
 		_i2cAddress(address << 1), _i2cAddressDebug(address), _currentBank(
 				BANK0) {
 
+	HAL_Delay(500);
 	setAccelConfig(_accel_config);
-	switchUserBank(BANK0);
 	clearBuffer();
 	if (isDeviceConnected() == HAL_OK) {
 		sprintf(debugBuf, "I2C Device 0x%x detected\r\n", _i2cAddressDebug);
 		uartFlush();
 		whoAmI();
 		reset();
-
+		wakeUp();
+		setClockSource(AUTO_CLK_SELECT);
 	} else {
 		sprintf(debugBuf, "I2C Device 0x%x is not detected\r\n",
 				_i2cAddressDebug);
@@ -56,7 +57,7 @@ HAL_StatusTypeDef ICM20948::isDeviceConnected() {
 uint8_t ICM20948::whoAmI(void) {
 	switchUserBank(BANK0);
 
-	uint8_t id = I2C_ReadByte(REGISTER_WHO_AM_I);
+	uint8_t id = readByte(REGISTER_WHO_AM_I);
 	if (id == WHOAMI) {
 		sprintf(debugBuf, "Imu 0x%x\tid:%x\tconnected\r\n",
 				_i2cAddress >> 1 & 0xFF, id & 0xFF);
@@ -76,26 +77,53 @@ uint8_t ICM20948::whoAmI(void) {
  * 			Reset Value = 0x01
  * return	value of register == config
  */
-bool ICM20948::setAccelConfig(const ACCEL_CONFIG &config) {
+bool ICM20948::setAccelConfig(ACCEL_CONFIG &config) {
 	_accel_config = config;
-	switchUserBank(BANK2);
-	I2C_writeTwoBytes(REGISTER_BANK_SEL, _accel_config.getConfiguration());
-	HAL_Delay(100);
-	bool status = I2C_ReadByte(REGISTER_BANK_SEL) == _accel_config.getConfiguration();
-	if (status) {
-		sprintf(debugBuf, "Imu 0x%x Accel_config successful\r\n",_i2cAddress >> 1 & 0xFF);
-	} else {
-		sprintf(debugBuf, "Imu 0x%x Accel_config fail\r\n",_i2cAddress >> 1 & 0xFF);
-	}
+	uint8_t value = 0x00;
+	value = _accel_config.getConfiguration();
+	sprintf(debugBuf, "setAccelConfig: Value before: %x\r\n", value);
 	uartFlush();
-	return status;
+	switchUserBank(BANK2);
+
+	writeByte(REGISTER_ACCEL_CONFIG, value);
+	HAL_Delay(50);
+	value = readByte(REGISTER_ACCEL_CONFIG);
+	HAL_Delay(50);
+	sprintf(debugBuf, "setAccelConfig: Value after: %x\r\n", value);
+	uartFlush();
+
+	return true;
+}
+
+void ICM20948::readAccelGyroRaw(uint8_t *buffer) {
+	switchUserBank(BANK0);
+	uint8_t raw[ACCEL_GYRO_RAW_BYTES_COUNT] = { 0 };
+	readBytes(REGISTER_ACCEL_OUT, raw, ACCEL_GYRO_RAW_BYTES_COUNT);
+	float accelGyroData[6];
+	accelGyroData[0] = static_cast<int16_t>(((raw[0]) << 8) | raw[1])/ _accel_config.getSensitivityScaleFactor();
+	accelGyroData[1] = static_cast<int16_t>(((raw[2]) << 8) | raw[3])/ _accel_config.getSensitivityScaleFactor();
+	accelGyroData[2] = static_cast<int16_t>(((raw[4]) << 8) | raw[5])/ _accel_config.getSensitivityScaleFactor();
+
+
+	accelGyroData[4] = static_cast<int16_t>(((raw[6]) << 8) | raw[7])/ _gyro_config_1.getSensitivityScaleFactor();
+	accelGyroData[5] = static_cast<int16_t>(((raw[8]) << 8) | raw[9])/ _gyro_config_1.getSensitivityScaleFactor();
+	accelGyroData[6] = static_cast<int16_t>(((raw[10]) << 8) | raw[11])/ _gyro_config_1.getSensitivityScaleFactor();
+
+	sprintf(debugBuf, "%.3f,\t%.3f,\t%.3f,\t%.3f,\t%.3f,\t%.3f\r\n",
+			accelGyroData[0],
+			accelGyroData[1],
+			accelGyroData[2],
+			accelGyroData[3],
+			accelGyroData[4],
+			accelGyroData[5]);
+	uartFlush();
+
 }
 
 void ICM20948::switchUserBank(const USERBANK &newBank) {
 	if (_currentBank != newBank) {
 		_currentBank = newBank;
-		I2C_writeTwoBytes(REGISTER_BANK_SEL, _currentBank << 4);
-
+		writeByte(REGISTER_BANK_SEL, _currentBank << 4);
 	}
 }
 
@@ -107,49 +135,61 @@ void ICM20948::switchUserBank(const USERBANK &newBank) {
 
 void ICM20948::reset(void) {
 	switchUserBank(BANK0);
-	I2C_writeTwoBytes(REGISTER_PWR_MGMT_1, BIT_RESET);
+	writeByte(REGISTER_PWR_MGMT_1, BIT_RESET | 0x41);
 	HAL_Delay(20);
-	if (I2C_ReadByte(REGISTER_PWR_MGMT_1) == 0x41) {
+	if (readByte(REGISTER_PWR_MGMT_1) == 0x41) {
 		sprintf(debugBuf, "IMU 0x%x reset successful\r\n", _i2cAddressDebug);
 	} else {
 		sprintf(debugBuf, "IMU 0x%x reset unsuccessful\r\n", _i2cAddressDebug);
 	}
 	uartFlush();
+	HAL_Delay(100);
+}
+
+void ICM20948::wakeUp(void) {
+	switchUserBank(BANK0);
+	uint8_t new_val = readByte(REGISTER_PWR_MGMT_1);
+	new_val &= 0xBF;
+	writeByte(REGISTER_PWR_MGMT_1, new_val);
+	HAL_Delay(100);
+}
+
+
+void ICM20948::odrAlignEnable(void) {
+	switchUserBank(BANK2);
+	writeByte(REGISTER_ODR_ALIGN_EN, ENABLE);
 
 }
 
-void ICM20948::I2C_writeByte(const uint8_t &regAddress) {
-	uint8_t buf = regAddress;
-	ret = HAL_I2C_Master_Transmit(&hi2c1, _i2cAddress, &buf, sizeof(buf),
-	HAL_MAX_DELAY);
-	if (ret != HAL_OK) {
-		sprintf(debugBuf, "Error ICM20948::I2C_writeByte\r\n");
-		uartFlush();
-	}
+void ICM20948::setClockSource(CLKSEL source) {
+	switchUserBank(BANK0);
+	uint8_t new_val = readByte(REGISTER_PWR_MGMT_1);
+	new_val |= source;
+	writeByte(REGISTER_PWR_MGMT_1, new_val);
+	HAL_Delay(100);
 }
 
-uint8_t ICM20948::I2C_ReadByte(const uint8_t &regAddress) {
-	uint8_t retVal = 0x00;
-
-	I2C_writeByte(regAddress);
-
-	ret = HAL_I2C_Master_Receive(&hi2c1, _i2cAddress, &retVal, 0x01,
-	HAL_MAX_DELAY);
-	if (ret != HAL_OK) {
-		sprintf(debugBuf, "Error ICM20948::I2C_ReadByte - while writing\r\n");
-		uartFlush();
-	}
-	return retVal;
+void ICM20948::writeByte(const uint8_t registerAddress, uint8_t value) {
+	HAL_I2C_Mem_Write(&hi2c1, static_cast<uint16_t>(_i2cAddress),
+			static_cast<uint16_t>(registerAddress),
+			static_cast<uint16_t>(sizeof(uint8_t)), &value, sizeof(uint8_t),
+			HAL_MAX_DELAY);
 }
 
-void ICM20948::I2C_writeTwoBytes(const uint8_t &regAddress,
-		const uint8_t &value) {
-	uint8_t buf[2] = { regAddress, value };
-	ret = HAL_I2C_Master_Transmit(&hi2c1, _i2cAddress, buf, 0x02,
-	HAL_MAX_DELAY);
-	if (ret != HAL_OK) {
-		sprintf(debugBuf, "Error ICM20948::I2C_writeTwoBytes\r\n");
-		uartFlush();
-	}
+uint8_t ICM20948::readByte(const uint8_t registerAddress) {
+	uint8_t value = 0x00;
+	HAL_I2C_Mem_Read(&hi2c1, static_cast<uint16_t>(_i2cAddress),
+			static_cast<uint16_t>(registerAddress),
+			static_cast<uint16_t>(sizeof(uint8_t)), &value, sizeof(value),
+			HAL_MAX_DELAY);
+	return value;
 }
 
+void ICM20948::readBytes(const uint8_t registerAddress, uint8_t *buffer,
+		uint16_t bytes) {
+	HAL_I2C_Mem_Read(&hi2c1, static_cast<uint16_t>(_i2cAddress),
+			static_cast<uint16_t>(registerAddress),
+			static_cast<uint16_t>(sizeof(uint8_t)), buffer, bytes,
+			HAL_MAX_DELAY);
+
+}
