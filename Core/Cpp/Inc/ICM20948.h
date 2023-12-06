@@ -18,8 +18,11 @@ public:
 	void reset(void);
 	void wakeUp(void);
 	void odrAlignEnable(void);
+	void setAccelSampleRateDivider(uint16_t divider);
+	void setGyroSampleRateDivider(uint8_t divider);
 	void setClockSource(CLKSEL source);
 	bool setAccelConfig(ACCEL_CONFIG &config);
+	bool setGyroConfig1(GYRO_CONFIG_1 &config);
 	void readAccelGyroRaw(uint8_t* buffer);
 private:
 

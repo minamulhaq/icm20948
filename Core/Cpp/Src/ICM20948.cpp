@@ -95,6 +95,20 @@ bool ICM20948::setAccelConfig(ACCEL_CONFIG &config) {
 	return true;
 }
 
+/**
+ * Configure Gyro cofniguration
+ * @param	GYRO_CONFIG_1 - struct to register GYRO_CONFIG_1
+ * 			Register Address - 0x01 - Bank 2
+ * 			Reset Value = 0x01
+ * return	value of register == config
+ */
+bool ICM20948::setGyroConfig1(GYRO_CONFIG_1 &config) {
+	_gyro_config_1 = config;
+	uint8_t value = _gyro_config_1.getConfiguration();
+	switchUserBank(BANK2);
+	writeByte(REGISTER_GYRO_CONFIG_1, value);
+}
+
 void ICM20948::readAccelGyroRaw(uint8_t *buffer) {
 	switchUserBank(BANK0);
 	uint8_t raw[ACCEL_GYRO_RAW_BYTES_COUNT] = { 0 };
@@ -105,9 +119,9 @@ void ICM20948::readAccelGyroRaw(uint8_t *buffer) {
 	accelGyroData[2] = static_cast<int16_t>(((raw[4]) << 8) | raw[5])/ _accel_config.getSensitivityScaleFactor();
 
 
-	accelGyroData[4] = static_cast<int16_t>(((raw[6]) << 8) | raw[7])/ _gyro_config_1.getSensitivityScaleFactor();
-	accelGyroData[5] = static_cast<int16_t>(((raw[8]) << 8) | raw[9])/ _gyro_config_1.getSensitivityScaleFactor();
-	accelGyroData[6] = static_cast<int16_t>(((raw[10]) << 8) | raw[11])/ _gyro_config_1.getSensitivityScaleFactor();
+	accelGyroData[3] = static_cast<int16_t>(((raw[6]) << 8) | raw[7])/ _gyro_config_1.getSensitivityScaleFactor();
+	accelGyroData[4] = static_cast<int16_t>(((raw[8]) << 8) | raw[9])/ _gyro_config_1.getSensitivityScaleFactor();
+	accelGyroData[5] = static_cast<int16_t>(((raw[10]) << 8) | raw[11])/ _gyro_config_1.getSensitivityScaleFactor();
 
 	sprintf(debugBuf, "%.3f,\t%.3f,\t%.3f,\t%.3f,\t%.3f,\t%.3f\r\n",
 			accelGyroData[0],
@@ -159,6 +173,20 @@ void ICM20948::odrAlignEnable(void) {
 	switchUserBank(BANK2);
 	writeByte(REGISTER_ODR_ALIGN_EN, ENABLE);
 
+}
+
+
+void ICM20948::setAccelSampleRateDivider(uint16_t divider){
+	uint8_t msb = (divider & 0xFF00 ) >> 8;
+	uint8_t lsb = (divider & 0xFF);
+	switchUserBank(BANK2);
+	writeByte(REGISTER_ACCEL_SMPLRT_DIV_1, msb);
+	writeByte(REGISTER_ACCEL_SMPLRT_DIV_2, lsb);
+}
+
+void ICM20948::setGyroSampleRateDivider(uint8_t divider){
+	switchUserBank(BANK2);
+	writeByte(REGISTER_GYRO_SMPLRT_DIV, divider);
 }
 
 void ICM20948::setClockSource(CLKSEL source) {

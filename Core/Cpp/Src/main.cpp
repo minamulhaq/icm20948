@@ -45,9 +45,11 @@ void mainCpp(void) {
 	config.accel_fs_sel = ACCEL_FS_RANGE_4G;
 	config.accel_fchoice = ENABLE;
 
+	for (unsigned int i = 0; i < 20; i++) {
+	}
 	while (1) {
 		imu.readAccelGyroRaw(nullptr);
-		HAL_Delay(500);
+		HAL_Delay(200);
 
 	}
 }

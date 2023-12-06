@@ -10,7 +10,7 @@
 
 #define WHOAMI 0xEA
 
-#define ACCEL_GYRO_RAW_BYTES_COUNT 0x06
+#define ACCEL_GYRO_RAW_BYTES_COUNT 12
 
 typedef enum {
 	BANK0,
