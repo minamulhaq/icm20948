@@ -77,22 +77,13 @@ uint8_t ICM20948::whoAmI(void) {
  * 			Reset Value = 0x01
  * return	value of register == config
  */
-bool ICM20948::setAccelConfig(ACCEL_CONFIG &config) {
+void ICM20948::setAccelConfig(ACCEL_CONFIG &config) {
 	_accel_config = config;
 	uint8_t value = 0x00;
 	value = _accel_config.getConfiguration();
-	sprintf(debugBuf, "setAccelConfig: Value before: %x\r\n", value);
-	uartFlush();
 	switchUserBank(BANK2);
-
 	writeByte(REGISTER_ACCEL_CONFIG, value);
 	HAL_Delay(50);
-	value = readByte(REGISTER_ACCEL_CONFIG);
-	HAL_Delay(50);
-	sprintf(debugBuf, "setAccelConfig: Value after: %x\r\n", value);
-	uartFlush();
-
-	return true;
 }
 
 /**
@@ -102,11 +93,12 @@ bool ICM20948::setAccelConfig(ACCEL_CONFIG &config) {
  * 			Reset Value = 0x01
  * return	value of register == config
  */
-bool ICM20948::setGyroConfig1(GYRO_CONFIG_1 &config) {
+void ICM20948::setGyroConfig1(GYRO_CONFIG_1 &config) {
 	_gyro_config_1 = config;
 	uint8_t value = _gyro_config_1.getConfiguration();
 	switchUserBank(BANK2);
 	writeByte(REGISTER_GYRO_CONFIG_1, value);
+	HAL_Delay(50);
 }
 
 void ICM20948::readAccelGyroRaw(uint8_t *buffer) {
