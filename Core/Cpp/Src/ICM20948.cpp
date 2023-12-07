@@ -23,6 +23,9 @@ extern void clearBuffer(void);
 }
 #endif
 
+#ifdef __DEBUG
+#endif
+
 void uartFlush(void) {
 	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf),
 	HAL_MAX_DELAY);
@@ -37,16 +40,20 @@ ICM20948::ICM20948(uint8_t address) :
 	setAccelConfig(_accel_config);
 	clearBuffer();
 	if (isDeviceConnected() == HAL_OK) {
+#ifdef __DEBUG
 		sprintf(debugBuf, "I2C Device 0x%x detected\r\n", _i2cAddressDebug);
 		uartFlush();
+#endif
 		whoAmI();
 		reset();
 		wakeUp();
 		setClockSource(AUTO_CLK_SELECT);
 	} else {
+#ifdef __DEBUG
 		sprintf(debugBuf, "I2C Device 0x%x is not detected\r\n",
 				_i2cAddressDebug);
 		uartFlush();
+#endif
 	}
 
 }
@@ -58,6 +65,7 @@ uint8_t ICM20948::whoAmI(void) {
 	switchUserBank(BANK0);
 
 	uint8_t id = readByte(REGISTER_WHO_AM_I);
+#ifdef __DEBUG
 	if (id == WHOAMI) {
 		sprintf(debugBuf, "Imu 0x%x\tid:%x\tconnected\r\n",
 				_i2cAddress >> 1 & 0xFF, id & 0xFF);
@@ -66,7 +74,7 @@ uint8_t ICM20948::whoAmI(void) {
 				_i2cAddress >> 1 & 0xFF);
 	}
 	uartFlush();
-
+#endif
 	return id;
 }
 
@@ -142,13 +150,14 @@ void ICM20948::switchUserBank(const USERBANK &newBank) {
 void ICM20948::reset(void) {
 	switchUserBank(BANK0);
 	writeByte(REGISTER_PWR_MGMT_1, BIT_RESET | 0x41);
-	HAL_Delay(20);
+#ifdef __DEBUG
 	if (readByte(REGISTER_PWR_MGMT_1) == 0x41) {
 		sprintf(debugBuf, "IMU 0x%x reset successful\r\n", _i2cAddressDebug);
 	} else {
 		sprintf(debugBuf, "IMU 0x%x reset unsuccessful\r\n", _i2cAddressDebug);
 	}
 	uartFlush();
+#endif
 	HAL_Delay(100);
 }
 

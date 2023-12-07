@@ -36,10 +36,13 @@ float accelGyro[6];
 
 void mainCpp(void) {
 	clearBuffer();
+
+#ifdef __DEBUG
 	sprintf(debugBuf, "\r\n\n\n___ BEGIN ___\r\n");
 	uartFlush();
-	ICM20948 imu(0x69);
+#endif
 
+	ICM20948 imu(0x69);
 	ACCEL_CONFIG config;
 	config.accel_dlpfcfg = DLPF_4;
 	config.accel_fs_sel = ACCEL_FS_RANGE_4G;
