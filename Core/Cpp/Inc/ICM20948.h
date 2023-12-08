@@ -23,7 +23,7 @@ public:
 	void setClockSource(CLKSEL source);
 	void setAccelConfig(ACCEL_CONFIG &config);
 	void setGyroConfig1(GYRO_CONFIG_1 &config);
-	void readAccelGyroRaw(uint8_t* buffer);
+	void readAccelGyroRaw(float* accelGyroData);
 private:
 
 	// fields

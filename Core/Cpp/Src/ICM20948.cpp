@@ -112,12 +112,10 @@ void ICM20948::setGyroConfig1(GYRO_CONFIG_1 &config) {
 }
 
 
-void ICM20948::readAccelGyroRaw(uint8_t *buffer) {
+void ICM20948::readAccelGyroRaw(float *accelGyroData) {
 	switchUserBank(BANK0);
 	uint8_t raw[ACCEL_GYRO_RAW_BYTES_COUNT] = { 0 };
 	readBytes(REGISTER_ACCEL_OUT, raw, ACCEL_GYRO_RAW_BYTES_COUNT);
-	float accelGyroData[6];
-	uint8_t totalBytes = sizeof(accelGyroData);
 	accelGyroData[0] = static_cast<int16_t>(((raw[0]) << 8) | raw[1])/ _accel_config.getSensitivityScaleFactor();
 	accelGyroData[1] = static_cast<int16_t>(((raw[2]) << 8) | raw[3])/ _accel_config.getSensitivityScaleFactor();
 	accelGyroData[2] = static_cast<int16_t>(((raw[4]) << 8) | raw[5])/ _accel_config.getSensitivityScaleFactor();
@@ -126,20 +124,6 @@ void ICM20948::readAccelGyroRaw(uint8_t *buffer) {
 	accelGyroData[3] = static_cast<int16_t>(((raw[6]) << 8) | raw[7])/ _gyro_config_1.getSensitivityScaleFactor();
 	accelGyroData[4] = static_cast<int16_t>(((raw[8]) << 8) | raw[9])/ _gyro_config_1.getSensitivityScaleFactor();
 	accelGyroData[5] = static_cast<int16_t>(((raw[10]) << 8) | raw[11])/ _gyro_config_1.getSensitivityScaleFactor();
-
-//	sprintf(debugBuf, "%0.3f,%0.3f,%0.3f,%0.3f,%0.3f,%0.3f\r\n",
-//			accelGyroData[0],
-//			accelGyroData[1],
-//			accelGyroData[2],
-//			accelGyroData[3],
-//			accelGyroData[4],
-//			accelGyroData[5]);
-//	uartFlush();
-//	sprintf(dataBuffer, "%0.3f\r\n",
-//			accelGyroData[0]);
-
-	HAL_UART_Transmit(&huart2, (uint8_t*)accelGyroData, sizeof(accelGyroData), HAL_MAX_DELAY);
-
 }
 
 void ICM20948::switchUserBank(const USERBANK &newBank) {
