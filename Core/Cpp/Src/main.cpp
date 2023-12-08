@@ -7,6 +7,7 @@
 
 #include <stm32l4xx.h>
 #include <string>
+#include <string.h>
 #include <algorithm>
 
 #include "ICM20948.h"
@@ -26,7 +27,7 @@ void clearBuffer(void) {
 	std::fill(std::begin(debugBuf), std::end(debugBuf), 0);
 }
 void uartFlush(void) {
-	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, sizeof(debugBuf),
+	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, strlen(debugBuf),
 			HAL_MAX_DELAY);
 	clearBuffer();
 }
