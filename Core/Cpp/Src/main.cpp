@@ -9,12 +9,15 @@
 #include <string>
 #include <string.h>
 #include <algorithm>
-
 #include "ICM20948.h"
 #include <stm32l476xx.h>
+#include <main.h>
 
 extern I2C_HandleTypeDef hi2c1;
 extern UART_HandleTypeDef huart2;
+extern SYSTEM_STATE systemState;
+
+extern bool collectSample;
 
 uint8_t rawAccelGyro[12] = { 0 };
 char debugBuf[512] = { 0 };
@@ -52,12 +55,28 @@ void mainCpp(void) {
 	uint32_t time;
 
 	while (1) {
-		time = HAL_GetTick();
-		imu.readAccelGyroRaw(accelGyroData);
-		time = HAL_GetTick() - time;
-		HAL_UART_Transmit(&huart2, (uint8_t*) accelGyroData,
-				sizeof(accelGyroData), HAL_MAX_DELAY);
-		HAL_Delay(20-time);
+		/*
+		 time = HAL_GetTick();
+		 imu.readAccelGyroRaw(accelGyroData);
+		 time = HAL_GetTick() - time;
+		 HAL_UART_Transmit(&huart2, (uint8_t*) accelGyroData,
+		 sizeof(accelGyroData), HAL_MAX_DELAY);
+		 HAL_Delay(20-time);
+		 */
+		switch (systemState) {
+		case IDLE:
+			break;
+		case COLLECT_SAMPLES:
+			imu.readAccelGyroRaw(accelGyroData);
+			HAL_UART_Transmit(&huart2, (uint8_t*) accelGyroData,
+					sizeof(accelGyroData), HAL_MAX_DELAY);
+			systemState = IDLE;
+		case FLUSH:
+			break;
+		default:
+			break;
+
+		}
 
 	}
 }
