@@ -28,10 +28,9 @@ void clearBuffer(void) {
 }
 void uartFlush(void) {
 	HAL_UART_Transmit(&huart2, (uint8_t*) debugBuf, strlen(debugBuf),
-			HAL_MAX_DELAY);
+	HAL_MAX_DELAY);
 	clearBuffer();
 }
-
 
 float accelGyro[6];
 
@@ -50,12 +49,15 @@ void mainCpp(void) {
 	config.accel_fchoice = ENABLE;
 
 	float accelGyroData[6];
+	uint32_t time;
 
 	while (1) {
+		time = HAL_GetTick();
 		imu.readAccelGyroRaw(accelGyroData);
+		time = HAL_GetTick() - time;
 		HAL_UART_Transmit(&huart2, (uint8_t*) accelGyroData,
 				sizeof(accelGyroData), HAL_MAX_DELAY);
-		HAL_Delay(50);
+		HAL_Delay(20-time);
 
 	}
 }

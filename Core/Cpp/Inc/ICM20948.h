@@ -10,6 +10,8 @@
 
 #include "stm32l4xx_hal.h"
 #include "icm20948_common.h"
+
+
 class ICM20948 {
 public:
 	ICM20948(uint8_t address);
@@ -47,4 +49,5 @@ private:
 //	void I2C_writeTwoBytes(const uint8_t& regAddress, const uint8_t& value);
 };
 
-#endif /* SRC_ICM20948_H_ */
+
+#endif
