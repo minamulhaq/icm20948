@@ -20,14 +20,16 @@ public:
 	void reset(void);
 	void wakeUp(void);
 	void odrAlignEnable(FunctionalState state);
-	void setAccelSampleRateDivider(uint16_t divider);
-	void setGyroSampleRateDivider(uint8_t divider);
 	void setClockSource(CLKSEL source);
 	void setAccelConfig(ACCEL_CONFIG &config);
 	void setGyroConfig1(GYRO_CONFIG_1 &config);
 	void setGyroSmplRtDiv(uint16_t frequency);
+	void setAccelSmplRtDiv(uint16_t frequency);
 	void readAccelGyroRaw(float* accelGyroData);
 	uint8_t getGyroSampleRateDivider(uint16_t frequency);
+	uint16_t getAccelSampleRateDivider(uint16_t frequency);
+
+
 private:
 
 	// fields

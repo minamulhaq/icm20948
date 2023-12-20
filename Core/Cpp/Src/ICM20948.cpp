@@ -125,29 +125,46 @@ void ICM20948::setGyroConfig1(GYRO_CONFIG_1 &config) {
  */
 void ICM20948::setGyroSmplRtDiv(uint16_t frequency) {
 	uint8_t divider = 0x00;
-	if (frequency <= GYRO_INTERNAL_RATE){
+	if (frequency <= GYRO_INTERNAL_RATE_WITH_DLPF){
 		divider = getGyroSampleRateDivider(frequency);
 	}
 	switchUserBank(BANK2);
 	writeByte(REGISTER_GYRO_SMPLRT_DIV, divider);
-
-	if (_gyro_config_1.gyro_dlpfcfg < DLPF_0){
-		_gyro_config_1.gyro_dlpfcfg = DLPF_1;
-	}
-	if (_gyro_config_1.gyro_fchoice == DISABLE){
-		_gyro_config_1.gyro_fchoice = ENABLE;
-	}
-	setGyroConfig1(_gyro_config_1);
 	HAL_Delay(50);
 }
+
+
+void ICM20948::setAccelSmplRtDiv(uint16_t frequency){
+	uint16_t divider = 0x00;
+	if (frequency <= ACCEL_INTERNAL_RATE_WITH_DLPF) {
+		divider = getAccelSampleRateDivider(frequency);
+	}
+	uint8_t msb = (divider & 0xFF00 ) >> 8;
+	uint8_t lsb = (divider & 0xFF);
+	switchUserBank(BANK2);
+	writeByte(REGISTER_ACCEL_SMPLRT_DIV_1, msb);
+	writeByte(REGISTER_ACCEL_SMPLRT_DIV_2, lsb);
+	HAL_Delay(50);
+
+}
+
 
 /**
  * ODR is computed as follows:
  * 1125 /(1+GYRO_SMPLRT_DIV[7:0])
  */
 uint8_t ICM20948::getGyroSampleRateDivider(uint16_t frequency) {
-	return static_cast<uint8_t>((GYRO_INTERNAL_RATE / frequency) - 1);
+	return static_cast<uint8_t>((GYRO_INTERNAL_RATE_WITH_DLPF/ frequency) - 1);
 }
+
+/**
+ * ODR is computed as follows:
+ * 1125 kHz/(1+ACCEL_SMPLRT_DIV[11:0])
+ */
+uint16_t ICM20948::getAccelSampleRateDivider(uint16_t frequency){
+	return static_cast<uint16_t>((ACCEL_INTERNAL_RATE_WITH_DLPF/ frequency) - 1);
+}
+
 
 void ICM20948::readAccelGyroRaw(float *accelGyroData) {
 	switchUserBank(BANK0);
@@ -205,19 +222,6 @@ void ICM20948::odrAlignEnable(FunctionalState state) {
 
 }
 
-
-void ICM20948::setAccelSampleRateDivider(uint16_t divider){
-	uint8_t msb = (divider & 0xFF00 ) >> 8;
-	uint8_t lsb = (divider & 0xFF);
-	switchUserBank(BANK2);
-	writeByte(REGISTER_ACCEL_SMPLRT_DIV_1, msb);
-	writeByte(REGISTER_ACCEL_SMPLRT_DIV_2, lsb);
-}
-
-void ICM20948::setGyroSampleRateDivider(uint8_t divider){
-	switchUserBank(BANK2);
-	writeByte(REGISTER_GYRO_SMPLRT_DIV, divider);
-}
 
 void ICM20948::setClockSource(CLKSEL source) {
 	switchUserBank(BANK0);

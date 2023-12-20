@@ -33,7 +33,8 @@ typedef enum FCHOICE {
 } FCHOICE;
 */
 
-#define GYRO_INTERNAL_RATE 1100
+#define GYRO_INTERNAL_RATE_WITH_DLPF 			1125
+#define ACCEL_INTERNAL_RATE_WITH_DLPF 			1125
 
 
 typedef enum {
@@ -45,7 +46,6 @@ typedef enum {
   DLPF_5,
   DLPF_6,
   DLPF_7,
-  DLPF_OFF
 } DLPF;
 
 typedef enum GYRO_FS_RANGE {

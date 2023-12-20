@@ -46,12 +46,27 @@ void mainCpp(void) {
 #endif
 
 	ICM20948 imu(0x69);
+
+	uint8_t samplingRate = 50;
+
+
+	imu.setAccelSmplRtDiv(samplingRate);
+	imu.setGyroSmplRtDiv(samplingRate);
+
+
 	ACCEL_CONFIG config;
-	config.accel_dlpfcfg = DLPF_1;
+	config.accel_dlpfcfg = DLPF_6;
 	config.accel_fs_sel = ACCEL_FS_RANGE_4G;
 	config.accel_fchoice = ENABLE;
-
 	imu.setAccelConfig(config);
+
+
+
+	GYRO_CONFIG_1 gyroConfig1;
+	gyroConfig1.gyro_dlpfcfg = DLPF_6;
+	gyroConfig1.gyro_fchoice = ENABLE;
+	gyroConfig1.gyro_fs_sel = GYRO_FS_RANGE_250;
+	imu.setGyroConfig1(gyroConfig1);
 
 
 	imu.odrAlignEnable(ENABLE);
