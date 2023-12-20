@@ -313,6 +313,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -321,10 +325,19 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	if (htim == &htim16) {
 		systemState = COLLECT_SAMPLES;
-		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 	}
 
 }
+
+
+
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if (GPIO_Pin == B1_Pin) {
+		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+	}
+}
+
 /* USER CODE END 4 */
 
 /**

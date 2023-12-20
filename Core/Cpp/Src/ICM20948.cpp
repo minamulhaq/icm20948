@@ -8,6 +8,7 @@
 #include <string>
 #include <cstring>
 #include <string.h>
+#include <assert.h>
 #include "ICM20948.h"
 #include "icm20948_common.h"
 
@@ -112,6 +113,42 @@ void ICM20948::setGyroConfig1(GYRO_CONFIG_1 &config) {
 }
 
 
+/**
+ * Configure Gyro Sample Rate
+ * @param	uint16_t  frequency < 1.1kz
+ * 			Register Address - 0x00 - Bank 2
+ * 			Reset Value = 0x00
+ * return	void
+ *
+ * NOTE: This register is only effective when FCHOICE = 1’b1 (FCHOICE_B register bit is 1’b0), and (0 < DLPF_CFG < 7).
+ *
+ */
+void ICM20948::setGyroSmplRtDiv(uint16_t frequency) {
+	uint8_t divider = 0x00;
+	if (frequency <= GYRO_INTERNAL_RATE){
+		divider = getGyroSampleRateDivider(frequency);
+	}
+	switchUserBank(BANK2);
+	writeByte(REGISTER_GYRO_SMPLRT_DIV, divider);
+
+	if (_gyro_config_1.gyro_dlpfcfg < DLPF_0){
+		_gyro_config_1.gyro_dlpfcfg = DLPF_1;
+	}
+	if (_gyro_config_1.gyro_fchoice == DISABLE){
+		_gyro_config_1.gyro_fchoice = ENABLE;
+	}
+	setGyroConfig1(_gyro_config_1);
+	HAL_Delay(50);
+}
+
+/**
+ * ODR is computed as follows:
+ * 1125 /(1+GYRO_SMPLRT_DIV[7:0])
+ */
+uint8_t ICM20948::getGyroSampleRateDivider(uint16_t frequency) {
+	return static_cast<uint8_t>((GYRO_INTERNAL_RATE / frequency) - 1);
+}
+
 void ICM20948::readAccelGyroRaw(float *accelGyroData) {
 	switchUserBank(BANK0);
 	uint8_t raw[ACCEL_GYRO_RAW_BYTES_COUNT] = { 0 };
@@ -126,7 +163,7 @@ void ICM20948::readAccelGyroRaw(float *accelGyroData) {
 	accelGyroData[5] = static_cast<int16_t>(((raw[10]) << 8) | raw[11])/ _gyro_config_1.getSensitivityScaleFactor();
 }
 
-void ICM20948::switchUserBank(const USERBANK &newBank) {
+inline void ICM20948::switchUserBank(const USERBANK &newBank) {
 	if (_currentBank != newBank) {
 		_currentBank = newBank;
 		writeByte(REGISTER_BANK_SEL, _currentBank << 4);
@@ -162,9 +199,9 @@ void ICM20948::wakeUp(void) {
 }
 
 
-void ICM20948::odrAlignEnable(void) {
+void ICM20948::odrAlignEnable(FunctionalState state) {
 	switchUserBank(BANK2);
-	writeByte(REGISTER_ODR_ALIGN_EN, ENABLE);
+	writeByte(REGISTER_ODR_ALIGN_EN, state);
 
 }
 
@@ -190,14 +227,14 @@ void ICM20948::setClockSource(CLKSEL source) {
 	HAL_Delay(100);
 }
 
-void ICM20948::writeByte(const uint8_t registerAddress, uint8_t value) {
+inline void ICM20948::writeByte(const uint8_t registerAddress, uint8_t value) {
 	HAL_I2C_Mem_Write(&hi2c1, static_cast<uint16_t>(_i2cAddress),
 			static_cast<uint16_t>(registerAddress),
 			static_cast<uint16_t>(sizeof(uint8_t)), &value, sizeof(uint8_t),
 			HAL_MAX_DELAY);
 }
 
-uint8_t ICM20948::readByte(const uint8_t registerAddress) {
+inline uint8_t ICM20948::readByte(const uint8_t registerAddress) {
 	uint8_t value = 0x00;
 	HAL_I2C_Mem_Read(&hi2c1, static_cast<uint16_t>(_i2cAddress),
 			static_cast<uint16_t>(registerAddress),
@@ -206,7 +243,7 @@ uint8_t ICM20948::readByte(const uint8_t registerAddress) {
 	return value;
 }
 
-void ICM20948::readBytes(const uint8_t registerAddress, uint8_t *buffer,
+inline void ICM20948::readBytes(const uint8_t registerAddress, uint8_t *buffer,
 		uint16_t bytes) {
 	HAL_I2C_Mem_Read(&hi2c1, static_cast<uint16_t>(_i2cAddress),
 			static_cast<uint16_t>(registerAddress),

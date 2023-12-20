@@ -19,13 +19,15 @@ public:
 	uint8_t whoAmI(void);
 	void reset(void);
 	void wakeUp(void);
-	void odrAlignEnable(void);
+	void odrAlignEnable(FunctionalState state);
 	void setAccelSampleRateDivider(uint16_t divider);
 	void setGyroSampleRateDivider(uint8_t divider);
 	void setClockSource(CLKSEL source);
 	void setAccelConfig(ACCEL_CONFIG &config);
 	void setGyroConfig1(GYRO_CONFIG_1 &config);
+	void setGyroSmplRtDiv(uint16_t frequency);
 	void readAccelGyroRaw(float* accelGyroData);
+	uint8_t getGyroSampleRateDivider(uint16_t frequency);
 private:
 
 	// fields
@@ -37,11 +39,11 @@ private:
 	GYRO_CONFIG_1 _gyro_config_1;
 
 	// Methods
-	void switchUserBank(const USERBANK &newBank);
+	inline void switchUserBank(const USERBANK &newBank);
 
-	void writeByte(const uint8_t registerAddress, uint8_t value);
-	uint8_t readByte(const uint8_t registerAddress);
-	void readBytes(const uint8_t registerAddress, uint8_t* buffer, uint16_t count);
+	inline void writeByte(const uint8_t registerAddress, uint8_t value);
+	inline uint8_t readByte(const uint8_t registerAddress);
+	inline void readBytes(const uint8_t registerAddress, uint8_t* buffer, uint16_t count);
 
 
 //	void I2C_writeByte(const uint8_t& regAddress);

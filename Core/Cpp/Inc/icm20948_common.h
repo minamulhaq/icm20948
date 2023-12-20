@@ -33,6 +33,7 @@ typedef enum FCHOICE {
 } FCHOICE;
 */
 
+#define GYRO_INTERNAL_RATE 1100
 
 
 typedef enum {

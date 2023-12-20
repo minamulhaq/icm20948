@@ -47,13 +47,15 @@ void mainCpp(void) {
 
 	ICM20948 imu(0x69);
 	ACCEL_CONFIG config;
-	config.accel_dlpfcfg = DLPF_4;
+	config.accel_dlpfcfg = DLPF_1;
 	config.accel_fs_sel = ACCEL_FS_RANGE_4G;
 	config.accel_fchoice = ENABLE;
 
-	float accelGyroData[6];
-	uint32_t time;
+	imu.setAccelConfig(config);
 
+
+	imu.odrAlignEnable(ENABLE);
+	float accelGyroData[6];
 	while (1) {
 		/*
 		 time = HAL_GetTick();
